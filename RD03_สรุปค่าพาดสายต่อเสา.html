@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>สรุปค่าพาดสายต่อเสา — RD03</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    :root {
+      --ink: #1c1530;
+      --ink-soft: #5a5170;
+      --paper: #faf8fc;
+      --panel: #ffffff;
+      --line: #e4ddee;
+      --violet: #5b2a86;
+      --violet-deep: #3d1c5e;
+      --violet-soft: #efe7f7;
+      --amber: #c87f17;
+      --teal: #0e7a6f;
+      --mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+      --sans: 'Inter', -apple-system, 'Segoe UI', 'Noto Sans Thai', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .wrap {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
+    }
+
+    header.top {
+      background: linear-gradient(135deg, var(--violet-deep), var(--violet) 70%);
+      color: #fff;
+      padding: 28px 20px 34px;
+      border-bottom: 4px solid var(--amber);
+    }
+
+    header.top .inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    header.top .eyebrow {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      opacity: .75;
+      margin-bottom: 6px;
+    }
+
+    header.top h1 {
+      margin: 0 0 4px;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -.01em;
+    }
+
+    header.top .sub {
+      font-size: 13px;
+      opacity: .85;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin: -22px 0 22px;
+    }
+
+    .stat {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 16px 18px;
+      box-shadow: 0 6px 16px -10px rgba(60, 20, 90, .25);
+    }
+
+    .stat .label {
+      font-size: 11px;
+      color: var(--ink-soft);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 6px;
+      font-family: var(--mono);
+    }
+
+    .stat .value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--violet-deep);
+      font-family: var(--mono);
+    }
+
+    .stat .value small {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-soft);
+      margin-left: 4px;
+    }
+
+    .controls {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: end;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .field label {
+      font-size: 11px;
+      color: var(--ink-soft);
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    .field select,
+    .field input {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 8px 10px;
+      font-size: 13px;
+      font-family: var(--sans);
+      background: #fff;
+      color: var(--ink);
+      min-width: 160px;
+    }
+
+    .field input[type="search"] {
+      min-width: 260px;
+    }
+
+    .field select:focus,
+    .field input:focus {
+      outline: 2px solid var(--violet);
+      outline-offset: 1px;
+    }
+
+    .spacer {
+      flex: 1;
+    }
+
+    .resetbtn {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink-soft);
+      border-radius: 7px;
+      padding: 8px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: var(--sans);
+    }
+
+    .resetbtn:hover {
+      border-color: var(--violet);
+      color: var(--violet);
+    }
+
+    .tablewrap {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead th {
+      background: var(--violet-soft);
+      color: var(--violet-deep);
+      text-align: left;
+      padding: 10px 12px;
+      font-family: var(--mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    thead th:hover {
+      background: #e3d4f3;
+    }
+
+    thead th .arrow {
+      opacity: .45;
+      margin-left: 4px;
+      font-size: 10px;
+    }
+
+    thead th.active .arrow {
+      opacity: 1;
+      color: var(--amber);
+    }
+
+    tbody tr.row {
+      border-bottom: 1px solid var(--line);
+      cursor: pointer;
+    }
+
+    tbody tr.row:hover {
+      background: #f7f3fb;
+    }
+
+    tbody td {
+      padding: 9px 12px;
+      vertical-align: top;
+    }
+
+    td.num {
+      font-family: var(--mono);
+      text-align: right;
+    }
+
+    td.loc {
+      font-family: var(--mono);
+      font-size: 11.5px;
+      color: var(--ink-soft);
+      max-width: 280px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-family: var(--mono);
+    }
+
+    .badge.r55 {
+      background: #e3f3ef;
+      color: var(--teal);
+    }
+
+    .badge.r110 {
+      background: #fbeed9;
+      color: var(--amber);
+    }
+
+    .expander {
+      color: var(--violet);
+      font-weight: 700;
+      display: inline-block;
+      width: 14px;
+    }
+
+    tr.detailrow td {
+      background: #fbf9fd;
+      padding: 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .detailbox {
+      padding: 14px 18px 18px 42px;
+    }
+
+    .detailbox h4 {
+      margin: 0 0 8px;
+      font-size: 12px;
+      color: var(--violet-deep);
+      font-family: var(--mono);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+
+    table.cabletable {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    table.cabletable th {
+      background: #f1ecf7;
+      color: var(--ink-soft);
+      font-family: var(--mono);
+      font-weight: 600;
+      font-size: 10.5px;
+      padding: 6px 8px;
+      text-align: left;
+      text-transform: uppercase;
+    }
+
+    table.cabletable td {
+      padding: 6px 8px;
+      border-top: 1px solid var(--line);
+      font-size: 12px;
+    }
+
+    table.cabletable td.num {
+      font-family: var(--mono);
+      text-align: right;
+    }
+
+    a.maplink {
+      color: var(--violet);
+      text-decoration: none;
+      font-size: 11px;
+      font-family: var(--mono);
+    }
+
+    a.maplink:hover {
+      text-decoration: underline;
+    }
+
+    .nodetail {
+      color: var(--ink-soft);
+      font-style: italic;
+      font-size: 12px;
+    }
+
+    #branchTbody tr {
+      cursor: pointer;
+      border-bottom: 1px solid var(--line);
+    }
+
+    #branchTbody tr:hover {
+      background: #f7f3fb;
+    }
+
+    #branchTbody tr.active {
+      background: var(--violet-soft);
+      font-weight: 600;
+    }
+
+    #branchTbody td {
+      padding: 9px 12px;
+    }
+
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 14px 16px;
+      flex-wrap: wrap;
+    }
+
+    .pagination .info {
+      font-size: 12px;
+      color: var(--ink-soft);
+      font-family: var(--mono);
+    }
+
+    .pagination .pages {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .pagination button {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: var(--mono);
+      color: var(--ink);
+    }
+
+    .pagination button:disabled {
+      opacity: .35;
+      cursor: default;
+    }
+
+    .pagination button.active {
+      background: var(--violet);
+      color: #fff;
+      border-color: var(--violet);
+    }
+
+    .pagination input.pageinput {
+      width: 50px;
+      text-align: center;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 6px;
+    }
+
+    footer.note {
+      margin-top: 18px;
+      font-size: 11px;
+      color: var(--ink-soft);
+      text-align: center;
+      font-family: var(--mono);
+    }
+
+    @media (max-width:900px) {
+      .stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .field input[type="search"] {
+        min-width: 160px;
+      }
+    }
+
+    /* --- CSS for File Upload UI --- */
+    .header-action {
+      display: flex;
+      align-items: center;
+    }
+
+    .change-btn {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 7px;
+      padding: 8px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: var(--sans);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .change-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+      border-color: #fff;
+    }
+
+    .upload-container {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 45px 35px;
+      box-shadow: 0 8px 30px rgba(60, 20, 90, 0.06);
+      max-width: 650px;
+      margin: 60px auto;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .upload-dropzone {
+      border: 2px dashed var(--line);
+      border-radius: 10px;
+      padding: 50px 30px;
+      background: rgba(239, 231, 247, 0.15);
+      cursor: pointer;
+      transition: all 0.25s ease-in-out;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .upload-dropzone:hover,
+    .upload-dropzone.dragover {
+      border-color: var(--violet);
+      background: rgba(239, 231, 247, 0.35);
+    }
+
+    .upload-icon {
+      color: var(--violet);
+      margin-bottom: 20px;
+      transition: transform 0.25s ease;
+    }
+
+    @keyframes bounce {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-6px);
+      }
+    }
+
+    .upload-dropzone.dragover .upload-icon,
+    .upload-dropzone:hover .upload-icon {
+      animation: bounce 1s infinite ease-in-out;
+    }
+
+    .upload-text {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--ink);
+      margin: 0 0 8px 0;
+    }
+
+    .upload-subtext {
+      font-size: 12.5px;
+      color: var(--ink-soft);
+      margin: 0 0 20px 0;
+    }
+
+    .upload-btn {
+      background: var(--violet);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      padding: 10px 22px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--sans);
+      transition: background 0.2s;
+      box-shadow: 0 4px 12px rgba(91, 42, 134, 0.2);
+    }
+
+    .upload-btn:hover {
+      background: var(--violet-deep);
+    }
+
+    .upload-error {
+      margin-top: 20px;
+      padding: 12px 16px;
+      background: #fdf2f2;
+      border: 1px solid #fbd5d5;
+      border-radius: 8px;
+      color: #de2c2c;
+      font-size: 13px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 500;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 4px solid var(--violet-soft);
+      border-top-color: var(--violet);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+
+<body>
+  <header class="top">
+    <div class="inner">
+      <div>
+        <div class="eyebrow">RD03 · กฟภ. เขต 1 (ภาคกลาง) — ฉะเชิงเทรา</div>
+        <h1>สรุปค่าพาดสายต่อเสา</h1>
+        <div class="sub">รวม Location-tag และ tagpole-tag เข้ากับสรุปค่าพาดสาย · คำนวณค่าพาดสาย = จำนวนเสา × Rate</div>
+      </div>
+      <div class="header-action" id="headerAction" style="display:none;">
+        <button class="change-btn" id="btnChangeFile">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
+          เปลี่ยนไฟล์ข้อมูล
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <!-- Upload Area -->
+    <div id="uploadArea" class="upload-container">
+      <div class="upload-dropzone" id="dropzone">
+        <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" y1="3" x2="12" y2="15" />
+        </svg>
+        <h3 class="upload-text">อัปโหลดไฟล์ข้อมูลสรุปค่าพาดสายต่อเสา</h3>
+        <p class="upload-subtext">ลากและวางไฟล์ที่นี่ หรือใช้ปุ่มด้านล่างเพื่อเลือกไฟล์<br>รองรับไฟล์ Excel (.xlsx,
+          .xls), JSON (.json), Base64 Text (.txt) หรือ Gzip (.gz)</p>
+        <button class="upload-btn" id="btnSelectFile">เลือกไฟล์ข้อมูล</button>
+        <input type="file" id="fileInput" accept=".json,.txt,.gz,.xlsx,.xls" style="display:none;">
+      </div>
+      <!-- Loading Area -->
+      <div id="loadingArea" style="display:none; padding: 40px 20px;">
+        <div class="spinner"></div>
+        <h3 class="upload-text" style="color:var(--violet);">กำลังประมวลผลไฟล์ข้อมูล...</h3>
+        <p class="upload-subtext">ระบบกำลังวิเคราะห์โครงสร้างข้อมูลและสร้างรายงานสรุป<br>(อาจใช้เวลาประมาณ 1-3 วินาทีสำหรับไฟล์ขนาดใหญ่)</p>
+      </div>
+      <div class="upload-error" id="uploadError">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" y1="8" x2="12" y2="12" />
+          <line x1="12" y1="16" x2="12.01" y2="16" />
+        </svg>
+        <span id="errorMessage">เกิดข้อผิดพลาดในการโหลดไฟล์</span>
+      </div>
+    </div>
+
+    <!-- Dashboard Area -->
+    <div id="dashboard" style="display:none;">
+      <div class="stats">
+        <div class="stat">
+          <div class="label">รายการ (Location)</div>
+          <div class="value" id="statRecords">—</div>
+        </div>
+        <div class="stat">
+          <div class="label">จำนวนเสา</div>
+          <div class="value" id="statPoles">—<small>ต้น</small></div>
+        </div>
+        <div class="stat">
+          <div class="label">ค่าพาดสายรวม</div>
+          <div class="value" id="statCost">—<small>บาท</small></div>
+        </div>
+        <div class="stat">
+          <div class="label">สายสื่อสาร (Location-tag)</div>
+          <div class="value" id="statCables">—<small>รายการ</small></div>
+        </div>
+      </div>
+
+      <div class="tablewrap" style="margin-bottom:16px;">
+        <div
+          style="padding:12px 16px 0; font-family:var(--mono); font-size:12px; color:var(--violet-deep); text-transform:uppercase; letter-spacing:.04em;">
+          สรุปตามสาขา กฟภ. — คลิกแถวเพื่อกรองตารางด้านล่าง</div>
+        <table id="branchTable">
+          <thead>
+            <tr>
+              <th data-bkey="branch">สาขา กฟภ.<span class="arrow">▲▼</span></th>
+              <th data-bkey="count" style="width:160px;">จำนวนรายการ Location<span class="arrow">▲▼</span></th>
+              <th data-bkey="poles" style="width:160px;">จำนวนเสา (ต้น)<span class="arrow">▲▼</span></th>
+              <th data-bkey="cost" style="width:180px;">ค่าพาดสาย (บาท)<span class="arrow">▲▼</span></th>
+            </tr>
+          </thead>
+          <tbody id="branchTbody"></tbody>
+          <tfoot>
+            <tr style="background:var(--violet-soft); font-weight:700;">
+              <td style="padding:9px 12px; font-family:var(--mono);" id="branchTotalLabel">รวมทั้งหมด</td>
+              <td class="num" id="branchTotalCount" style="padding:9px 12px;"></td>
+              <td class="num" id="branchTotalPoles" style="padding:9px 12px;"></td>
+              <td class="num" id="branchTotalCost" style="padding:9px 12px;"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="controls">
+        <div class="field">
+          <label for="fBranch">สาขา กฟภ.</label>
+          <select id="fBranch">
+            <option value="">ทั้งหมด</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="fRate">Rate</label>
+          <select id="fRate">
+            <option value="">ทั้งหมด</option>
+            <option value="55">55</option>
+            <option value="110">110</option>
+          </select>
+        </div>
+        <div class="field" style="flex:1;">
+          <label for="fSearch">ค้นหา (พิกัด / Tag / ชื่อเส้นทาง)</label>
+          <input type="search" id="fSearch" placeholder="เช่น 13.71, 32TLZZ, คลองเขื่อน...">
+        </div>
+        <div class="field">
+          <label>&nbsp;</label>
+          <button class="resetbtn" id="btnReset">ล้างตัวกรอง</button>
+        </div>
+      </div>
+
+      <div class="tablewrap">
+        <table id="mainTable">
+          <thead>
+            <tr>
+              <th style="width:24px;"></th>
+              <th data-key="id" style="width:50px;">ที่<span class="arrow">▲▼</span></th>
+              <th data-key="branch">สาขา กฟภ.<span class="arrow">▲▼</span></th>
+              <th data-key="start">Location<span class="arrow">▲▼</span></th>
+              <th data-key="tagcount">จำนวนสาย<span class="arrow">▲▼</span></th>
+              <th data-key="diam">เส้นผ่านศก.รวม(มม.)<span class="arrow">▲▼</span></th>
+              <th data-key="poles">จำนวนเสา(ต้น)<span class="arrow">▲▼</span></th>
+              <th data-key="rate">Rate<span class="arrow">▲▼</span></th>
+              <th data-key="cost">ค่าพาดสาย(บาท)<span class="arrow">▲▼</span></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+        <div class="pagination">
+          <div class="info" id="pageInfo">—</div>
+          <div class="pages" id="pageButtons"></div>
+        </div>
+      </div>
+
+      <footer class="note">อัปโหลดไฟล์ข้อมูลเพื่อแสดงผล — ไม่ต้องพึ่ง server · สูตรคำนวณ: ค่าพาดสาย = จำนวนเสา(ต้น) ×
+        Rate</footer>
+    </div>
+  </div>
+
+  <script>
+    let PAYLOAD = null;
+    let ROWS = [];
+    let BRANCH_AGG = [];
+    const COLIDX = { id: 0, branch: 1, start: 2, end: 3, tagcount: 4, diam: 5, poles: 6, rate: 7, cost: 8, cables: 9 };
+    const CCOL = { tag: 0, route: 1, ctype: 2, owner: 3, sub: 4, diam: 5, poles: 6, dist: 7, pstart: 8, pend: 9 };
+
+    const fmt = n => Number(n).toLocaleString('en-US');
+
+    let state = { branch: '', rate: '', search: '', sortKey: 'id', sortDir: 1, page: 1, perPage: 50, expanded: new Set() };
+    let bstate = { sortKey: 'branch', sortDir: 1, activeBranch: '' };
+
+    function b64ToBytes(b64) {
+      const bin = atob(b64);
+      const len = bin.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i);
+      return bytes;
+    }
+
+    function computeBranchAgg() {
+      const agg = new Map();
+      for (const r of ROWS) {
+        const b = r[COLIDX.branch];
+        if (!agg.has(b)) agg.set(b, { branch: b, count: 0, poles: 0, cost: 0 });
+        const a = agg.get(b);
+        a.count += 1;
+        a.poles += r[COLIDX.poles];
+        a.cost += r[COLIDX.cost];
+      }
+      return [...agg.values()];
+    }
+
+    function renderBranchTable() {
+      const sorted = [...BRANCH_AGG].sort((a, b) => {
+        let av = a[bstate.sortKey], bv = b[bstate.sortKey];
+        if (typeof av === 'string') { av = av.toLowerCase(); bv = bv.toLowerCase(); }
+        if (av < bv) return -1 * bstate.sortDir;
+        if (av > bv) return 1 * bstate.sortDir;
+        return 0;
+      });
+      const tbody = document.getElementById('branchTbody');
+      tbody.innerHTML = '';
+      for (const a of sorted) {
+        const tr = document.createElement('tr');
+        if (a.branch === bstate.activeBranch) tr.classList.add('active');
+        tr.innerHTML = `
+      <td>${a.branch}</td>
+      <td class="num">${fmt(a.count)}</td>
+      <td class="num">${fmt(a.poles)}</td>
+      <td class="num">${fmt(a.cost)}</td>
+    `;
+        tr.addEventListener('click', () => {
+          const newVal = (bstate.activeBranch === a.branch) ? '' : a.branch;
+          bstate.activeBranch = newVal;
+          state.branch = newVal;
+          document.getElementById('fBranch').value = newVal;
+          state.page = 1;
+          renderBranchTable();
+          render();
+        });
+        tbody.appendChild(tr);
+      }
+      let totalCount = 0, totalPoles = 0, totalCost = 0;
+      for (const a of BRANCH_AGG) { totalCount += a.count; totalPoles += a.poles; totalCost += a.cost; }
+      document.getElementById('branchTotalCount').textContent = fmt(totalCount);
+      document.getElementById('branchTotalPoles').textContent = fmt(totalPoles);
+      document.getElementById('branchTotalCost').textContent = fmt(totalCost);
+      document.getElementById('branchTotalLabel').textContent = 'รวมทั้งหมด (' + BRANCH_AGG.length + ' สาขา)';
+
+      document.querySelectorAll('#branchTable thead th[data-bkey]').forEach(th => {
+        th.classList.toggle('active', th.dataset.bkey === bstate.sortKey);
+        const arrow = th.querySelector('.arrow');
+        if (th.dataset.bkey === bstate.sortKey) arrow.textContent = bstate.sortDir === 1 ? '▲' : '▼';
+        else arrow.textContent = '▲▼';
+      });
+    }
+
+    function matchesCable(row, term) {
+      const cables = row[COLIDX.cables];
+      for (const c of cables) {
+        if ((c[CCOL.tag] || '').toLowerCase().includes(term)) return true;
+        if ((c[CCOL.route] || '').toLowerCase().includes(term)) return true;
+      }
+      return false;
+    }
+
+    // Global matches function for filter
+    function getFiltered() {
+      let rows = ROWS;
+      if (state.branch) rows = rows.filter(r => r[COLIDX.branch] === state.branch);
+      if (state.rate) rows = rows.filter(r => String(r[COLIDX.rate]) === state.rate);
+      if (state.search) {
+        const t = state.search;
+        rows = rows.filter(r =>
+          (r[COLIDX.start] + r[COLIDX.end]).toLowerCase().includes(t) ||
+          r[COLIDX.branch].toLowerCase().includes(t) ||
+          matchesCable(r, t)
+        );
+      }
+      return rows;
+    }
+
+    function getSorted(rows) {
+      const key = state.sortKey, dir = state.sortDir, idx = COLIDX[key];
+      return [...rows].sort((a, b) => {
+        let av = a[idx], bv = b[idx];
+        if (typeof av === 'string') { av = av.toLowerCase(); bv = bv.toLowerCase(); }
+        if (av < bv) return -1 * dir;
+        if (av > bv) return 1 * dir;
+        return 0;
+      });
+    }
+
+    function mapLink(coord) {
+      const c = (coord || '').trim();
+      if (!c) return '';
+      return `https://www.google.com/maps?q=${encodeURIComponent(c)}`;
+    }
+
+    function mapRouteLink(start, end) {
+      const s = (start || '').trim().replace(/\s+/g, '');
+      const e = (end || '').trim().replace(/\s+/g, '');
+      if (!s || !e) return '#';
+      return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(s)}&destination=${encodeURIComponent(e)}`;
+    }
+
+    function renderDetail(row) {
+      const cables = row[COLIDX.cables];
+      if (!cables.length) {
+        return `<div class="detailbox"><div class="nodetail">ไม่พบรายละเอียดสายในข้อมูล Location-tag สำหรับ Location นี้</div></div>`;
+      }
+      let html = `<div class="detailbox"><h4>รายละเอียดสายสื่อสารใน Location นี้ (${cables.length} รายการ)</h4>
+  <table class="cabletable"><thead><tr>
+    <th>Tag สาย</th><th>ชื่อเส้นทาง</th><th>ประเภทสาย</th><th>หน่วยงานเจ้าของ</th><th>ใต้สัมปทาน</th>
+    <th>เส้นผ่านศก.(มม.)</th><th>จำนวนเสา</th><th>ระยะทาง(กม.)</th><th>พิกัดต้น</th><th>พิกัดปลาย</th>
+  </tr></thead><tbody>`;
+      for (const c of cables) {
+        html += `<tr>
+      <td>${c[CCOL.tag]}</td>
+      <td>${c[CCOL.route]}</td>
+      <td>${c[CCOL.ctype]}</td>
+      <td>${c[CCOL.owner]}</td>
+      <td>${c[CCOL.sub]}</td>
+      <td class="num">${fmt(c[CCOL.diam])}</td>
+      <td class="num">${fmt(c[CCOL.poles])}</td>
+      <td>${c[CCOL.dist]}</td>
+      <td><a class="maplink" target="_blank" href="${mapLink(c[CCOL.pstart])}">📍 ${c[CCOL.pstart]}</a></td>
+      <td><a class="maplink" target="_blank" href="${mapLink(c[CCOL.pend])}">📍 ${c[CCOL.pend]}</a></td>
+    </tr>`;
+      }
+      html += `</tbody></table></div>`;
+      return html;
+    }
+
+    function render() {
+      const filtered = getFiltered();
+      const sorted = getSorted(filtered);
+      const totalPages = Math.max(1, Math.ceil(sorted.length / state.perPage));
+      if (state.page > totalPages) state.page = totalPages;
+      const startIdx = (state.page - 1) * state.perPage;
+      const pageRows = sorted.slice(startIdx, startIdx + state.perPage);
+
+      document.querySelectorAll('thead th[data-key]').forEach(th => {
+        th.classList.toggle('active', th.dataset.key === state.sortKey);
+        const arrow = th.querySelector('.arrow');
+        if (th.dataset.key === state.sortKey) arrow.textContent = state.sortDir === 1 ? '▲' : '▼';
+        else arrow.textContent = '▲▼';
+      });
+
+      const tbody = document.getElementById('tbody');
+      tbody.innerHTML = '';
+      for (const row of pageRows) {
+        const id = row[COLIDX.id];
+        const tr = document.createElement('tr');
+        tr.className = 'row';
+        tr.dataset.id = id;
+        const isOpen = state.expanded.has(id);
+        tr.innerHTML = `
+      <td class="expander">${isOpen ? '▾' : '▸'}</td>
+      <td class="num">${id + 1}</td>
+      <td>${row[COLIDX.branch]}</td>
+      <td class="loc">
+        <a class="maplink" href="${mapRouteLink(row[COLIDX.start], row[COLIDX.end])}" target="_blank" onclick="event.stopPropagation()">
+          📍 ${row[COLIDX.start]} →<br>📍 ${row[COLIDX.end]}
+        </a>
+      </td>
+      <td class="num">${fmt(row[COLIDX.tagcount])}</td>
+      <td class="num">${fmt(row[COLIDX.diam])}</td>
+      <td class="num">${fmt(row[COLIDX.poles])}</td>
+      <td><span class="badge ${row[COLIDX.rate] === 55 ? 'r55' : 'r110'}">${row[COLIDX.rate]}</span></td>
+      <td class="num">${fmt(row[COLIDX.cost])}</td>
+    `;
+        tr.addEventListener('click', () => {
+          if (state.expanded.has(id)) state.expanded.delete(id);
+          else state.expanded.add(id);
+          render();
+        });
+        tbody.appendChild(tr);
+        if (isOpen) {
+          const dtr = document.createElement('tr');
+          dtr.className = 'detailrow';
+          const td = document.createElement('td');
+          td.colSpan = 9;
+          td.innerHTML = renderDetail(row);
+          dtr.appendChild(td);
+          tbody.appendChild(dtr);
+        }
+      }
+
+      document.getElementById('pageInfo').textContent =
+        `แสดง ${sorted.length ? startIdx + 1 : 0}-${Math.min(startIdx + state.perPage, sorted.length)} จาก ${fmt(sorted.length)} รายการ (กรองแล้ว) · ทั้งหมด ${fmt(ROWS.length)} รายการ`;
+
+      const pagesDiv = document.getElementById('pageButtons');
+      pagesDiv.innerHTML = '';
+      const mkBtn = (label, page, disabled, active) => {
+        const b = document.createElement('button');
+        b.textContent = label;
+        b.disabled = disabled;
+        if (active) b.classList.add('active');
+        b.addEventListener('click', () => { state.page = page; render(); });
+        return b;
+      };
+      pagesDiv.appendChild(mkBtn('« ก่อนหน้า', state.page - 1, state.page <= 1, false));
+      let pages = [];
+      const cur = state.page;
+      for (let p = 1; p <= totalPages; p++) {
+        if (p === 1 || p === totalPages || Math.abs(p - cur) <= 2) pages.push(p);
+      }
+      let last = 0;
+      for (const p of pages) {
+        if (p - last > 1) {
+          const dots = document.createElement('span');
+          dots.textContent = '…';
+          dots.style.color = 'var(--ink-soft)';
+          dots.style.padding = '0 4px';
+          pagesDiv.appendChild(dots);
+        }
+        pagesDiv.appendChild(mkBtn(String(p), p, false, p === cur));
+        last = p;
+      }
+      pagesDiv.appendChild(mkBtn('ถัดไป »', state.page + 1, state.page >= totalPages, false));
+    }
+
+    function showError(msg) {
+      const errBox = document.getElementById('uploadError');
+      const errMsg = document.getElementById('errorMessage');
+      errMsg.textContent = msg;
+      errBox.style.display = 'flex';
+    }
+
+    function processFile(file) {
+      document.getElementById('dropzone').style.display = 'none';
+      document.getElementById('uploadError').style.display = 'none';
+      document.getElementById('loadingArea').style.display = 'block';
+
+      setTimeout(() => {
+        const reader = new FileReader();
+        const extension = file.name.split('.').pop().toLowerCase();
+
+        function handleParseError(msg) {
+          document.getElementById('loadingArea').style.display = 'none';
+          document.getElementById('dropzone').style.display = 'flex';
+          showError(msg);
+        }
+
+        if (extension === 'xlsx' || extension === 'xls') {
+          reader.onload = function (e) {
+            try {
+              const arrayBuffer = e.target.result;
+              const data = new Uint8Array(arrayBuffer);
+              const workbook = XLSX.read(data, { type: 'array' });
+
+              let locationTagSheetName = workbook.SheetNames.find(n => n.toLowerCase() === 'location-tag');
+              if (!locationTagSheetName) {
+                locationTagSheetName = workbook.SheetNames.find(n => n.toLowerCase().includes('location-tag'));
+              }
+
+              let summarySheetName = null;
+              for (const name of workbook.SheetNames) {
+                if (name.toLowerCase().includes('tagpole') || name.toLowerCase().includes('location-tag')) continue;
+                const sheet = workbook.Sheets[name];
+                if (!sheet) continue;
+
+                let foundLocation = false;
+                for (let rowIdx = 1; rowIdx <= 5; rowIdx++) {
+                  if (sheet['B' + rowIdx] && String(sheet['B' + rowIdx].v).trim().toLowerCase() === 'location') {
+                    foundLocation = true;
+                    break;
+                  }
+                }
+                if (foundLocation) {
+                  summarySheetName = name;
+                  break;
+                }
+              }
+
+              if (!locationTagSheetName) {
+                throw new Error("ไม่พบ Sheet 'Location-tag' ในไฟล์ Excel");
+              }
+              if (!summarySheetName) {
+                summarySheetName = workbook.SheetNames.find(n => !n.toLowerCase().includes('tagpole') && n.toLowerCase() !== 'location-tag');
+                if (!summarySheetName) {
+                  throw new Error("ไม่พบ Sheet สรุปข้อมูล ในไฟล์ Excel");
+                }
+              }
+
+              console.log("Using Location-tag sheet:", locationTagSheetName);
+              console.log("Using Summary sheet:", summarySheetName);
+
+              const locRows = XLSX.utils.sheet_to_json(workbook.Sheets[locationTagSheetName], { header: 1 });
+              const sumRows = XLSX.utils.sheet_to_json(workbook.Sheets[summarySheetName], { header: 1 });
+
+              let locHeaderIdx = -1;
+              for (let i = 0; i < locRows.length; i++) {
+                if (locRows[i] && String(locRows[i][3] || '').trim().toLowerCase() === 'location') {
+                  locHeaderIdx = i;
+                  break;
+                }
+              }
+              if (locHeaderIdx === -1) locHeaderIdx = 0;
+
+              let sumHeaderIdx = -1;
+              for (let i = 0; i < sumRows.length; i++) {
+                if (sumRows[i] && String(sumRows[i][1] || '').trim().toLowerCase() === 'location') {
+                  sumHeaderIdx = i;
+                  break;
+                }
+              }
+              if (sumHeaderIdx === -1) sumHeaderIdx = 2;
+
+              const cablesByLoc = new Map();
+              for (let i = locHeaderIdx + 1; i < locRows.length; i++) {
+                const r = locRows[i];
+                if (!r || r.length < 13) continue;
+                const locStr = String(r[3] || '').trim();
+                if (!locStr) continue;
+
+                const tag = String(r[5] || '').trim();
+                const route = String(r[2] || '').trim();
+                const ctype = String(r[8] || '').trim();
+                const owner = String(r[6] || '').trim();
+                const sub = String(r[7] || '').trim();
+                const diam = Number(r[9] || 0);
+                const poles = Number(r[11] || 0);
+                const dist = Number(r[12] || 0);
+                const pstart = String(r[21] || '').trim();
+                const pend = String(r[22] || '').trim();
+
+                const cable = [tag, route, ctype, owner, sub, diam, poles, dist, pstart, pend];
+
+                const normKey = locStr.replace(/[^0-9,.]/g, '');
+                if (!cablesByLoc.has(normKey)) {
+                  cablesByLoc.set(normKey, []);
+                }
+                cablesByLoc.get(normKey).push(cable);
+              }
+
+              const rows = [];
+              let idCounter = 0;
+              for (let i = sumHeaderIdx + 1; i < sumRows.length; i++) {
+                const r = sumRows[i];
+                if (!r || r.length < 8) continue;
+                const locStr = String(r[1] || '').trim();
+                if (!locStr || !locStr.includes(',')) continue;
+
+                const branch = String(r[0] || '').trim();
+                const start = String(r[2] || '').trim();
+                const end = String(r[3] || '').trim();
+                const tagcount = Number(r[4] || 0);
+                const diam = Number(r[5] || 0);
+                const poles = Number(r[6] || 0);
+                const rate = Number(r[7] || 55);
+                const cost = poles * rate;
+
+                const normKey = locStr.replace(/[^0-9,.]/g, '');
+                let cables = cablesByLoc.get(normKey) || [];
+
+                if (cables.length === 0 && start) {
+                  const startNorm = start.replace(/[^0-9,.]/g, '');
+                  for (const [key, list] of cablesByLoc.entries()) {
+                    if (key.startsWith(startNorm)) {
+                      cables = list;
+                      break;
+                    }
+                  }
+                }
+
+                rows.push([
+                  idCounter++,
+                  branch,
+                  start,
+                  end,
+                  tagcount,
+                  diam,
+                  poles,
+                  rate,
+                  cost,
+                  cables
+                ]);
+              }
+
+              if (rows.length === 0) {
+                throw new Error("ไม่มีข้อมูลสรุปรายชื่อ Location หรือพิกัดไม่ถูกต้อง");
+              }
+
+              const payloadObj = {
+                cols: ["id", "branch", "start", "end", "tagcount", "diam", "poles", "rate", "cost", "cables"],
+                cable_cols: ["tag", "route", "ctype", "owner", "sub", "diam", "poles", "dist", "pstart", "pend"],
+                rows: rows
+              };
+
+              loadData(payloadObj);
+            } catch (err) {
+              handleParseError("เกิดข้อผิดพลาดในการวิเคราะห์ไฟล์ Excel: " + err.message);
+            }
+          };
+          reader.onerror = function () {
+            handleParseError("ไม่สามารถอ่านไฟล์ Excel ได้");
+          };
+          reader.readAsArrayBuffer(file);
+        } else if (extension === 'gz') {
+          reader.onload = function (e) {
+            try {
+              const arrayBuffer = e.target.result;
+              const gz = new Uint8Array(arrayBuffer);
+              const jsonStr = pako.inflate(gz, { to: 'string' });
+              const data = JSON.parse(jsonStr);
+              loadData(data);
+            } catch (err) {
+              handleParseError("ไฟล์ .gz มีข้อผิดพลาด หรือไม่ใช่รูปแบบ Gzip ที่ถูกต้อง: " + err.message);
+            }
+          };
+          reader.onerror = function () {
+            handleParseError("ไม่สามารถอ่านไฟล์ .gz ได้");
+          };
+          reader.readAsArrayBuffer(file);
+        } else {
+          reader.onload = function (e) {
+            const text = e.target.result.trim();
+            try {
+              if (text.startsWith('{')) {
+                const data = JSON.parse(text);
+                loadData(data);
+                return;
+              }
+            } catch (err) {
+              // Fallback to base64
+            }
+
+            try {
+              let cleaned = text.replace(/[\r\n\s"'`\[\],]+/g, '');
+              const gz = b64ToBytes(cleaned);
+              const jsonStr = pako.inflate(gz, { to: 'string' });
+              const data = JSON.parse(jsonStr);
+              loadData(data);
+            } catch (err) {
+              handleParseError("ไฟล์ข้อมูลไม่ถูกต้อง (ต้องเป็น JSON หรือข้อความ Base64 Gzip)");
+            }
+          };
+          reader.onerror = function () {
+            handleParseError("ไม่สามารถอ่านไฟล์ข้อความได้");
+          };
+          reader.readAsText(file);
+        }
+      }, 100);
+    }
+
+    function loadData(payloadObj) {
+      try {
+        if (!payloadObj || !Array.isArray(payloadObj.rows)) {
+          throw new Error("โครงสร้างไฟล์ข้อมูลไม่ถูกต้อง (ต้องมีฟิลด์ rows)");
+        }
+        PAYLOAD = payloadObj;
+        ROWS = PAYLOAD.rows;
+
+        let totalPoles = 0, totalCost = 0;
+        let totalCables = 0;
+        for (const r of ROWS) {
+          totalPoles += r[COLIDX.poles];
+          totalCost += r[COLIDX.cost];
+          totalCables += (r[COLIDX.cables] ? r[COLIDX.cables].length : 0);
+        }
+
+        document.getElementById('statRecords').textContent = fmt(ROWS.length);
+        document.getElementById('statPoles').innerHTML = fmt(totalPoles) + '<small>ต้น</small>';
+        document.getElementById('statCost').innerHTML = fmt(totalCost) + '<small>บาท</small>';
+        document.getElementById('statCables').innerHTML = fmt(totalCables) + '<small>รายการ</small>';
+
+        const branches = [...new Set(ROWS.map(r => r[COLIDX.branch]))].sort();
+        const sel = document.getElementById('fBranch');
+        sel.innerHTML = '<option value="">ทั้งหมด</option>';
+        branches.forEach(b => {
+          const o = document.createElement('option');
+          o.value = b; o.textContent = b;
+          sel.appendChild(o);
+        });
+
+        state = { branch: '', rate: '', search: '', sortKey: 'id', sortDir: 1, page: 1, perPage: 50, expanded: new Set() };
+        bstate = { sortKey: 'branch', sortDir: 1, activeBranch: '' };
+        BRANCH_AGG = computeBranchAgg();
+
+        document.getElementById('uploadArea').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        document.getElementById('headerAction').style.display = 'flex';
+        document.getElementById('uploadError').style.display = 'none';
+
+        renderBranchTable();
+        render();
+      } catch (err) {
+        showError("ไม่สามารถวิเคราะห์ข้อมูลได้: " + err.message);
+      }
+    }
+
+    function init() {
+      document.getElementById('fBranch').addEventListener('change', e => { state.branch = e.target.value; bstate.activeBranch = e.target.value; state.page = 1; renderBranchTable(); render(); });
+      document.getElementById('fRate').addEventListener('change', e => { state.rate = e.target.value; state.page = 1; render(); });
+      document.getElementById('fSearch').addEventListener('input', e => { state.search = e.target.value.trim().toLowerCase(); state.page = 1; render(); });
+      document.getElementById('btnReset').addEventListener('click', () => {
+        state.branch = ''; state.rate = ''; state.search = ''; bstate.activeBranch = '';
+        document.getElementById('fBranch').value = '';
+        document.getElementById('fRate').value = '';
+        document.getElementById('fSearch').value = '';
+        state.page = 1; renderBranchTable(); render();
+      });
+      document.querySelectorAll('thead th[data-key]').forEach(th => {
+        th.addEventListener('click', () => {
+          const key = th.dataset.key;
+          if (state.sortKey === key) state.sortDir *= -1;
+          else { state.sortKey = key; state.sortDir = 1; }
+          render();
+        });
+      });
+
+      document.querySelectorAll('#branchTable thead th[data-bkey]').forEach(th => {
+        th.addEventListener('click', () => {
+          const key = th.dataset.bkey;
+          if (bstate.sortKey === key) bstate.sortDir *= -1;
+          else { bstate.sortKey = key; bstate.sortDir = 1; }
+          renderBranchTable();
+        });
+      });
+
+      const fileInput = document.getElementById('fileInput');
+      const btnSelectFile = document.getElementById('btnSelectFile');
+      const btnChangeFile = document.getElementById('btnChangeFile');
+      const dropzone = document.getElementById('dropzone');
+
+      btnSelectFile.addEventListener('click', () => fileInput.click());
+      btnChangeFile.addEventListener('click', () => {
+        document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('headerAction').style.display = 'none';
+        document.getElementById('uploadArea').style.display = 'block';
+        document.getElementById('uploadError').style.display = 'none';
+        document.getElementById('dropzone').style.display = 'flex';
+        document.getElementById('loadingArea').style.display = 'none';
+        fileInput.value = '';
+      });
+
+      fileInput.addEventListener('change', e => {
+        if (e.target.files.length > 0) {
+          processFile(e.target.files[0]);
+        }
+      });
+
+      ['dragenter', 'dragover'].forEach(name => {
+        dropzone.addEventListener(name, e => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.add('dragover');
+        }, false);
+      });
+
+      ['dragleave', 'drop'].forEach(name => {
+        dropzone.addEventListener(name, e => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.remove('dragover');
+        }, false);
+      });
+
+      dropzone.addEventListener('drop', e => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length > 0) {
+          processFile(files[0]);
+        }
+      }, false);
+    }
+
+    init();
+  </script>
+</body>
+
+</html>
